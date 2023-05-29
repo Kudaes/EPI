@@ -59,11 +59,14 @@ fn main() {
             {
                 println!("{}",&lc!("[x] SeDebugPrivilege could not be enabled."));
             }
+            else
+            {
+                println!("{}",&lc!("[+] SeDebugPrivilege enabled."));
+            }
         }
 
-        let pid =  matches.opt_str("p").unwrap().parse::<u32>().unwrap();
+        let pid = matches.opt_str("p").unwrap().parse::<u32>().unwrap();
 
-        // PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION  
         let desired_access;
         if dummy_thread
         {
@@ -82,8 +85,6 @@ fn main() {
             println!("{}",&lc!("[x] Couldn't open a handle to the target process."));
             return;
         }
-
-        
 
         let module_to_hijack = dinvoke::get_module_base_address(&lc!("kernelbase.dll"));
         let addr = 0 as isize;
@@ -183,7 +184,6 @@ fn main() {
         } 
 
         println!("{} 0x{:x}.",&lc!("[-] Remote process' PEB is located at"), (*process_information_ptr).PebBaseAddress as isize);
-
 
         let peb_ldr_data: data::PEB_LDR_DATA = std::mem::zeroed();
         let peb_ldr_data_ptr: *mut data::PEB_LDR_DATA = std::mem::transmute(&peb_ldr_data);
