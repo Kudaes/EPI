@@ -38,7 +38,7 @@ After that, run the tool:
 
 ## No Loader - Custom payload
 
-If you just want to directly execute your shellcode without using the Loader, you have to replace the value of the `bytes` variable (`EPI::src::main.rs:13`) with the hexadecimal content of your payload. Then, compile the project and run the tool:
+If you just want to directly execute your custom shellcode without using the Loader, you have to replace the value of the `bytes` variable (`EPI::src::main.rs:13`) with the hexadecimal content of your payload. Then, compile the project and run the tool:
 
 	C:\Users\User\Desktop\EPI\EPI> cargo build --release
 	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -h 
@@ -103,6 +103,13 @@ In case that you want to test the execution of the shellcode when a thread exits
 * Keep using Sublime to verify that the process continues to run normally.
 
 Actually, you could also just wait for a minute or less since most of this kind of apps are constantly creating new threads in the background even without any user interaction.
+
+# TODO
+
+* Clean memory artifacts.
+* Test other sRDI generators.
+* Allow to target other dll than kernelbase.dll.
+* Indirect syscalls and other maldev stuff.
 
 # Credits
 
