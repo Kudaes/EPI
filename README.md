@@ -114,3 +114,4 @@ Actually, you could also just wait for a minute or less since most of this kind 
 # Credits
 
 * [monoxgas](https://github.com/monoxgas) for the astonishing [sRDI](https://github.com/monoxgas/sRDI) project that I have leveraged to convert the Loader dll into PIC.
+* [memN0ps](https://twitter.com/memN0ps) for the hard work and all the effort show in improving the tool [srdi-rs](https://github.com/memN0ps/srdi-rs).
