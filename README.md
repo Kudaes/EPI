@@ -12,7 +12,7 @@ The provided shellcode embbeded in the Loader spawns a new `cmd.exe /k msg "hell
 
 The advantages of this technique are the following:
 * Both threadless or threaded execution, at will.
-* No hooking.
+* No hooking (i.e. no RX memory regions are patched).
 * No generation of private memory regions on well known dll's RX memory pages.
 * No RWX memory permissions required.
 * The targeted process can continue its regular execution.
