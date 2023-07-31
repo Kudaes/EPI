@@ -15,28 +15,6 @@ use libc::c_void;
 use litcrypt::lc;
 use winproc::Process;
 
-/// Dynamically calls NtWriteVirtualMemory.
-///
-/// It will return the NTSTATUS value returned by the call.
-pub fn nt_read_virtual_memory (handle: HANDLE, base_address: PVOID, buffer: PVOID, size: usize, bytes_written: *mut usize) -> i32 {
-
-    unsafe 
-    {
-        let ret;
-        let func_ptr: data::NtReadVirtualMemory;
-        let ntdll = get_module_base_address(&lc!("ntdll.dll"));
-
-        dynamic_invoke!(ntdll,&lc!("NtReadVirtualMemory"),func_ptr,ret,handle,base_address,buffer,size,bytes_written);
-
-        match ret {
-            Some(x) => return x,
-            None => return -1,
-        }
-    }
-
-}
-
-
 /// Retrieves the base address of a module loaded in the current process.
 ///
 /// In case that the module can't be found in the current process, it will
@@ -699,6 +677,27 @@ pub fn nt_write_virtual_memory (handle: HANDLE, base_address: PVOID, buffer: PVO
         let func_ptr: data::NtWriteVirtualMemory;
         let ntdll = get_module_base_address(&lc!("ntdll.dll"));
         dynamic_invoke!(ntdll,&lc!("NtWriteVirtualMemory"),func_ptr,ret,handle,base_address,buffer,size,bytes_written);
+
+        match ret {
+            Some(x) => return x,
+            None => return -1,
+        }
+    }
+
+}
+
+/// Dynamically calls NtWriteVirtualMemory.
+///
+/// It will return the NTSTATUS value returned by the call.
+pub fn nt_read_virtual_memory (handle: HANDLE, base_address: PVOID, buffer: PVOID, size: usize, bytes_written: *mut usize) -> i32 {
+
+    unsafe 
+    {
+        let ret;
+        let func_ptr: data::NtReadVirtualMemory;
+        let ntdll = get_module_base_address(&lc!("ntdll.dll"));
+
+        dynamic_invoke!(ntdll,&lc!("NtReadVirtualMemory"),func_ptr,ret,handle,base_address,buffer,size,bytes_written);
 
         match ret {
             Some(x) => return x,

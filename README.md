@@ -2,7 +2,7 @@
 
 EPI (Entry Point Injection) is a tool that leverages a new threadless process injection technique that relies on hijacking loaded dll's [entry points](https://learn.microsoft.com/en-us/windows/win32/dlls/dllmain). To achieve this goal, EPI patches the target process' PEB such that one of the already loaded dll's entry point is redirected to a injected shellcode (which by default is the Loader previously converted to sRDI). Once a new thread is naturally spawned by the process or whenever a running thread exits, all loaded modules' entry points will be called which includes our injected shellcode. 
 
-Since we want the target process to continue its execution smoothly, generally speaking it is a bad idea to run our payload directly on the thread that is calling the hijacked entry point. For example, the direct execution of a C2 becon would completely hijack the thread which would surely lead to the program crash in case that the application is expecting the thread to perform a certain task. To deal with this situation, EPI by default does not directly inject the desired payload but a custom Loader, which is a regular dll converted to [sRDI](https://github.com/monoxgas/sRDI). The Loader has embedded the encrypted final payload (for example, the previously commented C2 beacon), and its main task is to decrypt, allocate and run this payload in a stable way. To achieve the execution keeping the "threadless" nature of the technique, the Loader will use the process' thread pool to run the payload by calling [QueueUserWorkItem](https://learn.microsoft.com/es-es/windows/win32/api/threadpoollegacyapiset/nf-threadpoollegacyapiset-queueuserworkitem). The use of QueueUserWorkItem ensures that, even in the case that a new thread is spawned (it depends on the thread pool availability), the start routine's address will never point to our payload avoiding that particular IOC.
+Since we want the target process to continue its execution smoothly, generally speaking it is a bad idea to run our payload directly on the thread that is calling the hijacked entry point. For example, the direct execution of a C2 becon would completely hijack the thread which would surely lead to the program crash in case that the application is expecting the thread to perform a certain task. To deal with this situation, EPI by default does not directly inject the desired payload but a custom Loader, which is a regular dll converted to [sRDI](https://github.com/monoxgas/sRDI). The Loader has embedded the encrypted final payload (for example, the previously commented C2 beacon), and its main task is to decrypt, allocate and run this payload in a stable way. To achieve the execution keeping the "threadless" nature of the technique, the Loader will use the process' thread pool to run the payload by calling [RtlQueueWorkItem](https://learn.microsoft.com/es-es/windows/win32/api/threadpoollegacyapiset/nf-threadpoollegacyapiset-queueuserworkitem). The use of RtlQueueWorkItem ensures that, even in the case that a new thread is spawned (it depends on the thread pool availability), the start routine's address will never point to our payload avoiding that particular IOC.
 
 Before exiting, the Loader restores the PEB and other modified structures to their previous state, preventing the multiple execution of our payload and allowing the process to continue its normal execution.
 
@@ -24,7 +24,7 @@ Since we are using [LITCRYPT](https://github.com/anvie/litcrypt.rs) plugin to ob
 
 	C:\Users\User\Desktop\EPI> set LITCRYPT_ENCRYPT_KEY="setarandomkeyeachtime"
 
-Then, depending on how you want to use the tool we have three diferent compilation processes.
+Then, depending on how you want to use the tool we have three different compilation processes.
 
 ## Use the tool as it is provided
 
@@ -55,7 +55,7 @@ First, you have to replace the value of the `bytes` variable in the Loader (`Loa
 
 Then, use the provided Python script `ConvertToShellcode.py` to convert the generated `loader.dll` into sRDI. I've obtained this script from the fantastic [sRDI](https://github.com/monoxgas/sRDI/tree/master) project after fixing some [issues](https://github.com/monoxgas/sRDI/pull/32) that were generating multi-hour long delays.
 
-	C:\Users\User\Desktop\EPI\sRDI> python3 ConvertToShellcode.py -f run loader.dll
+	C:\Users\User\Desktop\EPI\sRDI> python3 ConvertToShellcode.py -f run ..\Loader\target\release\loader.dll
 
 This execution should generate a `loader.bin` file. Again, get its hex content and use it to replace the value of the `bytes` variable in the EPI project (`EPI::src::main.rs:13`). Finally, compile EPI and run the tool:
 

