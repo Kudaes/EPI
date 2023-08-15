@@ -15,9 +15,8 @@ use data::{ApiSetNamespace, ApiSetNamespaceEntry, ApiSetValueEntry, DLL_PROCESS_
 use libc::c_void;
 use litcrypt::lc;
 use winproc::Process;
-use rand::Rng;
 
-static mut USE_IND_SYS: bool = false;
+static mut USE_IND_SYS: bool = true;
 
 /// Enables or disables the use of indirect syscalls
 pub fn use_indirect_sys(new_value: bool)
@@ -550,11 +549,11 @@ pub fn prepare_syscall(id: u32, eat: EAT) -> isize {
         }
 
         let max_range = eat.len();
-        let mut rng = rand::thread_rng();
         let mut function = &"".to_string();
         for s in eat.values()
         {
-            let index = rng.gen_range(0..max_range);
+            let index = fastrand::i32(0..max_range as i32) as usize;
+
             if index < max_range / 10
             {
                 function = s;
@@ -570,6 +569,7 @@ pub fn prepare_syscall(id: u32, eat: EAT) -> isize {
         }
 
         let syscall_addr = find_syscall_address(function_addr as usize);
+
         let mut syscall_ptr: *mut u8 = std::mem::transmute(&syscall_addr);
 
         for j in 0..8
@@ -586,6 +586,7 @@ pub fn prepare_syscall(id: u32, eat: EAT) -> isize {
         let size: *mut usize = std::mem::transmute(&s);
         let o = u32::default();
         let old_protection: *mut u32 = std::mem::transmute(&o);
+
         let ret = nt_allocate_virtual_memory(handle, base_address, 0, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
         
         if ret != 0
@@ -593,7 +594,7 @@ pub fn prepare_syscall(id: u32, eat: EAT) -> isize {
             USE_IND_SYS = previous_value;
             return 0;
         }
-        
+
         let buffer: *mut c_void = std::mem::transmute(sh.as_ptr());
         let b = usize::default();
         let bytes_written: *mut usize = std::mem::transmute(&b);
@@ -606,7 +607,6 @@ pub fn prepare_syscall(id: u32, eat: EAT) -> isize {
         }
 
         let ret = nt_protect_virtual_memory(handle, base_address, size, PAGE_EXECUTE_READ, old_protection);
-
         let _r = close_handle(handle);
         USE_IND_SYS = previous_value;
 
@@ -991,7 +991,6 @@ pub fn nt_query_information_process (handle: HANDLE, process_information_class: 
     {
         let ret;
         let func_ptr: data::NtQueryInformationProcess;
-
         if USE_IND_SYS
         {
             let func_name = &lc!("NtQueryInformationProcess");
