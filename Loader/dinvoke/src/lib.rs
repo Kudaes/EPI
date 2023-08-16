@@ -16,7 +16,7 @@ use libc::c_void;
 use litcrypt::lc;
 use winproc::Process;
 
-static mut USE_IND_SYS: bool = true;
+static mut USE_IND_SYS: bool = false;
 
 /// Enables or disables the use of indirect syscalls
 pub fn use_indirect_sys(new_value: bool)

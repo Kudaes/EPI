@@ -1,0 +1,76 @@
+import argparse
+import os
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('-p', '--path', type=str, required=False, help='Payload file path.')
+parser.add_argument('-l', '--use_loader', action='store_true', help='Use the Loader.')
+parser.add_argument('-i', '--use_syscalls', action='store_true', help='Force the Loader to use indirect syscalls.')
+
+args = parser.parse_args()
+final_payload = None
+
+if args.use_loader is not False:
+	print("[+] Using the provided Loader. Good choice.")
+
+	if args.path is not None:
+		with open('Loader\\src\\lib.rs', 'r') as file:
+		    src = file.readlines()
+		
+		with open(args.path, 'rb') as f:
+			hexdata = f.read().hex()
+
+		src[16] = '\tlet bytes = lc!("' + hexdata + '");\n'
+
+		with open('Loader\\src\\lib.rs', 'w') as file:
+			file.writelines(src)
+
+	if args.use_syscalls is not False:
+		print("[+] Enabling indirect syscalls on the Loader.")
+
+		with open('Loader\\dinvoke\\src\\lib.rs', 'r') as file:
+			dinvoke = file.readlines()
+
+		dinvoke[18] = 'static mut USE_IND_SYS: bool = true;\n'
+
+		with open('Loader\\dinvoke\\src\\lib.rs', 'w') as file:
+			file.writelines(dinvoke)
+
+	print("[-] Building the Loader...")
+	ret = os.system('cmd /c "cd .\\Loader && cargo build --release"')
+	if ret != 0:
+		print("[x] Error building the Loader.")
+		exit()
+
+	ret = os.system('cmd /c "cd .\\sRDI && python3 ConvertToShellcode.py -f run ..\Loader\\target\\release\loader.dll"')
+	if ret != 0:
+		ret = os.system('cmd /c "cd .\\sRDI && python ConvertToShellcode.py -f run ..\Loader\\target\\release\loader.dll"')
+		if ret != 0:
+			print("[x] Error converting the Loader into sRDI.")
+			exit()
+
+	with open('.\\Loader\\target\\release\\loader.bin', 'rb') as f:
+			final_payload = f.read().hex()	
+
+else:
+
+	if args.path is not None:
+		with open(args.path, 'rb') as f:
+			final_payload = f.read().hex()
+
+
+with open('EPI\\src\\main.rs', 'r') as file:
+	epi = file.readlines()
+
+epi[13] = '\tlet bytes = lc!("' + final_payload + '");\n'
+
+with open('EPI\\src\\main.rs', 'w') as file:
+	file.writelines(epi)
+
+print("[-] Building EPI...")
+ret = os.system('cmd /c "cd .\\EPI && cargo build --release"')
+if ret != 0:
+	print("[x] Error building EPI.")
+	exit()
+
+print("[+] Build successfully completed.")
