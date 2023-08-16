@@ -22,12 +22,27 @@ fn main() {
         let args: Vec<String> = env::args().collect();
         let program = args[0].clone();
         let mut opts = Options::new();
-        opts.optflag("h", "help", "Print this help menu.");
-        opts.optopt("p", "pid", "Target process.","");
-        opts.optflag("f", "force", "Spawn a dummy thread on target process to force the shellcode execution.");
-        opts.optflag("s", "signal", "Signal ALL target process' threads to exit. BE CAREFUL.");
-        opts.optflag("d", "debug", "Enable DEBUG privilege.");
-        opts.optflag("i", "indirect", "Use indirect syscalls.");
+
+        // This way we avoid to have all of these strings in clear text in the resulting binary
+        let help_name = lc!("help");
+        let help_description = lc!("Print this help menu.");
+        let pid_name = lc!("pid");
+        let pid_description = lc!("Target process.");
+        let force_name = lc!("force");
+        let force_description = lc!("Spawn a dummy thread on target process to force the shellcode execution.");
+        let signal_name = lc!("signal");
+        let signal_description = lc!("Signal ALL target process' threads to exit. BE CAREFUL.");
+        let debug_name = lc!("debug");
+        let debug_description = lc!("Enable DEBUG privilege.");
+        let syscall_name = lc!("indirect");
+        let syscall_description = lc!("Use indirect syscalls.");
+
+        opts.optflag("h", &help_name, &help_description);
+        opts.optopt("p", &pid_name, &pid_description,"");
+        opts.optflag("f", &force_name, &force_description);
+        opts.optflag("s", &signal_name, &signal_description);
+        opts.optflag("d", &debug_name, &debug_description);
+        opts.optflag("i", &syscall_name, &syscall_description);
 
         let matches = match opts.parse(&args[1..]) {
             Ok(m) => { m }
