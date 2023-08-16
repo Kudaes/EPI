@@ -11,11 +11,21 @@ strip = true
 
 [dependencies]
 dinvoke = { path = "dinvoke" }
-bindings = { path = "bindings" }
 data = { path = "data" }
 hex = "*"
 litcrypt = "0.3"
 getopts = "0.2"
+
+[dependencies.windows]
+version = "0.51"
+features = [
+    "Win32_Foundation",
+    "Win32_System",
+    "Win32_System_Kernel",
+    "Win32_System_Diagnostics_Debug",
+    "Wdk_Foundation",
+    "Win32_System_Threading"
+]
 
 [build-dependencies]
 static_vcruntime = "2.0"

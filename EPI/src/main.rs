@@ -4,7 +4,8 @@ use_litcrypt!();
 
 use std::{ffi::c_void, mem::size_of, ptr, env};
 
-use bindings::Windows::Win32::{System::{Threading::{PROCESS_BASIC_INFORMATION, PEB}, WindowsProgramming::{LDR_DATA_TABLE_ENTRY, OBJECT_ATTRIBUTES}, Kernel::LIST_ENTRY, Diagnostics::ToolHelp::THREADENTRY32}, Foundation::{HANDLE}};
+use windows::Win32::{System::{Threading::{PROCESS_BASIC_INFORMATION, PEB}, WindowsProgramming::LDR_DATA_TABLE_ENTRY, Kernel::LIST_ENTRY, Diagnostics::ToolHelp::THREADENTRY32}, Foundation::HANDLE};
+use windows::Wdk::Foundation::OBJECT_ATTRIBUTES;
 use data::{PVOID, PAGE_EXECUTE_READ, PAGE_READWRITE, MEM_COMMIT, MEM_RESERVE, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_VM_READ, PROCESS_VM_WRITE, PROCESS_VM_OPERATION, PROCESS_CREATE_THREAD, PROCESS_QUERY_INFORMATION, CLIENT_ID};
 use getopts::Options;
 
