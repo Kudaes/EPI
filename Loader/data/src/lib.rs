@@ -1,5 +1,7 @@
 use std::{collections::BTreeMap, ffi::c_void};
-use bindings::Windows::Win32::{Foundation::{BOOL, HANDLE, HINSTANCE, PSTR}, System::{Diagnostics::Debug::{IMAGE_DATA_DIRECTORY, IMAGE_OPTIONAL_HEADER32, IMAGE_SECTION_HEADER}, Kernel::{UNICODE_STRING, LIST_ENTRY}, WindowsProgramming::{OBJECT_ATTRIBUTES,CLIENT_ID}}};
+use windows::Win32::{Foundation::{BOOL, HANDLE, HINSTANCE, UNICODE_STRING}, System::{Diagnostics::Debug::{IMAGE_DATA_DIRECTORY, IMAGE_OPTIONAL_HEADER32, IMAGE_SECTION_HEADER}, Kernel::LIST_ENTRY, WindowsProgramming::CLIENT_ID}};
+use windows::core::PSTR;
+use windows::Wdk::Foundation::OBJECT_ATTRIBUTES;
 
 pub type PVOID = *mut c_void;
 pub type DWORD = u32;

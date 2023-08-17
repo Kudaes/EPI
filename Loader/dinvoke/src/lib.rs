@@ -6,10 +6,9 @@ use std::mem::size_of;
 use std::panic;
 use std::{collections::HashMap, ptr};
 use std::ffi::CString;
-use bindings::Windows::Win32::System::Kernel::UNICODE_STRING;
-use bindings::Windows::Win32::System::Threading::PROCESS_BASIC_INFORMATION;
-use bindings::Windows::Win32::System::WindowsProgramming::OBJECT_ATTRIBUTES;
-use bindings::Windows::Win32::{Foundation::{HANDLE, HINSTANCE}, System::Threading::GetCurrentProcess};
+use windows::Win32::System::Threading::PROCESS_BASIC_INFORMATION;
+use windows::Wdk::Foundation::OBJECT_ATTRIBUTES;
+use windows::Win32::{Foundation::{HANDLE, HINSTANCE,UNICODE_STRING}, System::Threading::GetCurrentProcess};
 use data::{ApiSetNamespace, ApiSetNamespaceEntry, ApiSetValueEntry, DLL_PROCESS_ATTACH, EAT, EntryPoint, MEM_COMMIT, MEM_RESERVE, PAGE_EXECUTE_READ, PAGE_READWRITE, 
     PVOID, PeMetadata, PS_ATTRIBUTE_LIST, PS_CREATE_INFO};
 use libc::c_void;

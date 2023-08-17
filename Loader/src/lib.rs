@@ -2,10 +2,7 @@
 extern crate litcrypt;
 use_litcrypt!();
 
-use bindings::Windows::Win32::Foundation::HANDLE;
-use bindings::Windows::Win32::System::Kernel::LIST_ENTRY;
-use bindings::Windows::Win32::System::Threading::{PEB, PROCESS_BASIC_INFORMATION};
-use bindings::Windows::Win32::System::WindowsProgramming::LDR_DATA_TABLE_ENTRY;
+use windows::Win32::{System::{Threading::{PROCESS_BASIC_INFORMATION, PEB}, WindowsProgramming::LDR_DATA_TABLE_ENTRY, Kernel::LIST_ENTRY}, Foundation::HANDLE};
 use data::{MEM_COMMIT, MEM_RESERVE, PAGE_READWRITE, PAGE_EXECUTE_READ, _INVERTED_FUNCTION_TABLE, PAGE_READONLY };
 use std::ffi::c_void;
 use std::mem::size_of;
