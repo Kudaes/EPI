@@ -49,7 +49,7 @@ Be aware that, depending on the behaviour of your shellcode, you might end up hi
 
 This is my recommended choice, since it allows you to fully customize the execution in the most reliable way. This is the right option if you want to run a different payload than the one provided and use the functionality of the Loader to avoid the crash of the target process.
 
-First, you have to replace the value of the `bytes` variable in the Loader (`Loader::src::lib.rs:17`) with the hexadecimal content of your payload. Then, compile the project as usual:
+First, you have to replace the value of the `bytes` variable in the Loader (`Loader::src::lib.rs:14`) with the hexadecimal content of your payload. Then, compile the project as usual:
 	
 	C:\Users\User\Desktop\EPI\Loader> cargo build --release
 

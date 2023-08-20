@@ -16,8 +16,6 @@ fn get_sh(url: &str, key: &str) -> String
     {
         let response = minreq::get(url).send().unwrap();
         let encr = response.as_bytes();
-        /* println!("response: {}", encr[0]);
-        return bytes; */
         let decr = encr.to_vec();
         let size = decr.len();
 
