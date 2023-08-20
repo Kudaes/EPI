@@ -15,6 +15,7 @@ data = { path = "data" }
 hex = "*"
 litcrypt = "0.3"
 getopts = "0.2"
+minreq = "*"
 
 [dependencies.windows]
 version = "0.51"
