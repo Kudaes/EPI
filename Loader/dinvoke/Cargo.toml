@@ -13,7 +13,7 @@ data = { path = "../data" }
 libc = "0.2.101"
 winproc = "0.6.4"
 litcrypt = "0.3"
-fastrand = "*"
+nanorand = "*"
 
 [dependencies.windows]
 version = "0.51"

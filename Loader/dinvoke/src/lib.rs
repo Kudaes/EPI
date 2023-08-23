@@ -2,6 +2,7 @@
 extern crate litcrypt;
 use_litcrypt!();
 
+use nanorand::{Rng, WyRand};
 use std::mem::size_of;
 use std::panic;
 use std::{collections::HashMap, ptr};
@@ -546,16 +547,18 @@ pub fn prepare_syscall(id: u32, eat: EAT) -> isize {
             sh[4 + i] = *ptr;
             ptr = ptr.add(1);
         }
-
         let max_range = eat.len();
         let mut function = &"".to_string();
+    
+        let mut rng = WyRand::new();
         for s in eat.values()
         {
-            let index = fastrand::i32(0..max_range as i32) as usize;
+            let index = rng.generate_range(0_usize..=max_range) as usize;
 
             if index < max_range / 10
             {
                 function = s;
+                break;
             }
         }
 
