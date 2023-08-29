@@ -57,7 +57,7 @@ This execution will embed your payload in the Loader, compile the Loader, conver
 
 	C:\Users\User\Desktop\EPI\EPI\target\release> epi.exe -p <PID> [flags]
 
-Again, if you don't want to embed the final PIC code in the resulting binary, you can encrypt it (simple xor encryption) passing the `-d` flag to the builder and then download it directly into the injector's process memory using HTTP:
+If you don't want to embed the final PIC code in the resulting binary, you can encrypt it (simple xor encryption) passing the `-d` flag to the builder and then download it directly into the injector's process memory using HTTP:
 
 	C:\Users\User\Desktop\EPI> python3 builder.py -l -p c:\path\to\payload.bin -d [-i]
 
