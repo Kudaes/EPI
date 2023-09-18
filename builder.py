@@ -47,9 +47,14 @@ if args.use_loader is not False:
 		print("[x] Error building the Loader.")
 		exit()
 
-	ret = os.system('cmd /c "cd .\\sRDI && python3 ConvertToShellcode.py -f run ..\\Loader\\target\\release\\loader.dll"')
+	path_a = os.path.join(os.getcwd(), 'sRDI')
+	path_b = os.path.join(os.getcwd(), 'Loader', 'target', 'release','loader.dll')
+	command = f'cmd /c "cd {path_a} && python ConvertToShellcode.py -f run {path_b}"'
+
+	ret = os.system(command)
 	if ret != 0:
-		ret = os.system('cmd /c "cd .\\sRDI && python ConvertToShellcode.py -f run ..\\Loader\\target\\release\\loader.dll"')
+		command = f'cmd /c "cd {path_a} && python3 ConvertToShellcode.py -f run {path_b}"'
+		ret = os.system(command)
 		if ret != 0:
 			print("[x] Error converting the Loader into sRDI.")
 			exit()
@@ -57,7 +62,9 @@ if args.use_loader is not False:
 	if args.download is not False:
 		key = os.environ['LITCRYPT_ENCRYPT_KEY'].replace('"','')
 		print("[-] Encrypting payload with key " + key)
-		command = 'cmd /c "cd .\\utils && encrypt.exe ..\\Loader\\target\\release\\loader.bin ' + key + '"'
+		path_a = os.path.join(os.getcwd(), 'utils')
+		path_b = os.path.join(os.getcwd(), 'Loader', 'target', 'release','loader.bin')
+		command = f'cmd /c "cd {path_a} && encrypt.exe {path_b} ' + key + '"'
 		ret = os.system(command)
 		if ret != 0:
 			print("[x] Error encrypting the payload.")
