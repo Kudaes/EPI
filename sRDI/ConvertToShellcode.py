@@ -20,7 +20,8 @@ def main():
     input_dll = arguments.input_dll
     output_bin = input_dll.replace('.dll', '.bin')
 
-    dll = open(arguments.input_dll, 'rb').read()
+    with open(arguments.input_dll, 'rb') as f:
+        dll = f.read()
 
     flags = 0
 

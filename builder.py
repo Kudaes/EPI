@@ -1,5 +1,6 @@
 import argparse
 import os
+import time 
 
 parser = argparse.ArgumentParser()
 
@@ -46,6 +47,9 @@ if args.use_loader is not False:
 	if ret != 0:
 		print("[x] Error building the Loader.")
 		exit()
+
+
+	time.sleep(10)
 
 	path_a = os.path.join(os.getcwd(), 'sRDI')
 	path_b = os.path.join(os.getcwd(), 'Loader', 'target', 'release','loader.dll')
