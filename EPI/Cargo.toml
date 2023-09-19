@@ -5,7 +5,7 @@ edition = "2021"
 
 # From https://stackoverflow.com/questions/29008127/why-are-rust-executables-so-huge
 [profile.release]
-opt-level = 'z'     # Optimize for size.
+#opt-level = 'z'     # Optimize for size.
 codegen-units = 1   # Reduce number of codegen units to increase optimizations.
 strip = true  
 
