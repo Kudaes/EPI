@@ -11,7 +11,7 @@ parser.add_argument('-d', '--download', action='store_true', help='Prepare the p
 
 
 args = parser.parse_args()
-final_payload = None
+final_payload = ""
 
 if args.use_loader is not False:
 	print("[+] Using the provided Loader. Good choice.")
