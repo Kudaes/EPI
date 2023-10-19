@@ -37,7 +37,7 @@ if args.use_loader is not False:
 	with open('Loader\\dinvoke\\src\\lib.rs', 'r') as file:
 		dinvoke = file.readlines()
 
-	dinvoke[18] = 'static mut USE_IND_SYS: bool = ' + sys + ';\n'
+	dinvoke[19] = 'static mut USE_IND_SYS: bool = ' + sys + ';\n'
 
 	with open('Loader\\dinvoke\\src\\lib.rs', 'w') as file:
 		file.writelines(dinvoke)

