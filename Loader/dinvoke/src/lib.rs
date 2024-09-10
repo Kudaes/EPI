@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate litcrypt;
+extern crate litcrypt2;
 use_litcrypt!();
 
 use nanorand::{Rng, WyRand};
@@ -14,7 +14,7 @@ use windows::Win32::{Foundation::{HANDLE, HINSTANCE,UNICODE_STRING}, System::Thr
 use data::{ApiSetNamespace, ApiSetNamespaceEntry, ApiSetValueEntry, DLL_PROCESS_ATTACH, EAT, EntryPoint, MEM_COMMIT, MEM_RESERVE, PAGE_EXECUTE_READ, PAGE_READWRITE, 
     PVOID, PeMetadata, PS_ATTRIBUTE_LIST, PS_CREATE_INFO};
 use libc::c_void;
-use litcrypt::lc;
+use litcrypt2::lc;
 use winproc::Process;
 
 static mut USE_IND_SYS: bool = false;

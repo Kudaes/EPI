@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate litcrypt;
+extern crate litcrypt2;
 use_litcrypt!();
 
 use windows::Win32::{System::{Threading::{PROCESS_BASIC_INFORMATION, PEB}, WindowsProgramming::LDR_DATA_TABLE_ENTRY, Kernel::LIST_ENTRY}, Foundation::HANDLE};

@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate litcrypt;
+extern crate litcrypt2;
 use_litcrypt!();
 
 use std::{ffi::c_void, mem::size_of, ptr, env, cell::UnsafeCell};

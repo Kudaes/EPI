@@ -13,7 +13,7 @@ strip = true
 dinvoke = { path = "dinvoke" }
 data = { path = "data" }
 hex = "*"
-litcrypt = "0.3"
+litcrypt2 = "0.1.2"
 getopts = "0.2"
 minreq = "*"
 
